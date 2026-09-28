@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Management System</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/toastr.min.css">
+    <!-- DataTables (Bootstrap 5 styling) -->
+    <link href="https://cdn.datatables.net/2.1.8/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
+            --modal-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            min-height: 100vh;
+        }
+
+        .navbar-custom {
+            background: var(--primary-gradient);
+            box-shadow: 0 4px 20px rgba(79, 70, 229, 0.15);
+        }
+
+        .main-card {
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            background: #ffffff;
+        }
+
+        .btn-gradient-primary {
+            background: var(--primary-gradient);
+            border: none;
+            color: #ffffff;
+            font-weight: 600;
+            padding: 0.6rem 1.25rem;
+            border-radius: 10px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .btn-gradient-primary:hover {
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35);
+        }
+
+        .table-custom thead th {
+            background-color: #f1f5f9;
+            color: #475569;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.78rem;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #e2e8f0;
+            padding: 1rem 2rem 1rem 1.25rem; /* extra right space for sort arrows */
+        }
+
+        .table-custom tbody td {
+            padding: 1rem 1.25rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.92rem;
+        }
+
+        .table-custom tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .badge-class {
+            background-color: #e0e7ff;
+            color: #4338ca;
+            font-weight: 600;
+        }
+
+        .modal-content {
+            border-radius: 16px;
+            border: none;
+            box-shadow: var(--modal-shadow);
+        }
+
+        .modal-header {
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            border-top-left-radius: 16px;
+            border-top-right-radius: 16px;
+            padding: 1.25rem 1.5rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            padding: 0.65rem 0.9rem;
+            font-size: 0.92rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        /* DataTables: spacing for search bar, page-length dropdown, info and paging */
+        .dt-container .dt-layout-row:first-child { padding: 1rem 1.25rem 0.5rem; }
+        .dt-container .dt-layout-row:last-child  { padding: 0.5rem 1.25rem 1rem; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom py-3">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center fw-bold" href="#">
+                <i class="bi bi-mortarboard-fill fs-3 me-2"></i>
+                <span>School Management System</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4 py-4">
+
+        <div class="row g-3 mb-4 align-items-center">
+            <div class="col-md-6">
+                <h2 class="fw-bold mb-1">Student Directory</h2>
+                <p class="text-muted mb-0">Manage student records.</p>
+            </div>
+            <div class="col-md-6 d-flex justify-content-md-end gap-2">
+                <button type="button" class="btn btn-outline-secondary d-flex align-items-center" id="btnRefresh">
+                    <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                </button>
+                <button type="button" class="btn btn-gradient-primary d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#modalAddStudent">
+                    <i class="bi bi-person-plus-fill me-2"></i> Add New Student
+                </button>
+            </div>
+        </div>
+
+        <div class="main-card">
+            <div class="table-responsive">
+                <table id="studentTable" class="table table-custom mb-0 align-middle w-100">
+                    <thead>
+                        <tr>
+                            <th scope="col" style="width: 120px;">Student ID</th>
+                            <th scope="col">First Name</th>
+                            <th scope="col">Last Name</th>
+                            <th scope="col">Gender</th>
+                            <th scope="col">Date of Birth</th>
+                            <th scope="col">Email Address</th>
+                            <th scope="col">Class</th>
+                            <th scope="col" class="text-end" style="width: 100px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal fade" id="modalAddStudent" tabindex="-1" aria-labelledby="modalAddStudentLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="modalAddStudentLabel">Add New Student</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="formAddStudent">
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="firstName" class="form-label fw-semibold small">First Name</label>
+                                <input type="text" class="form-control" id="firstName" name="first_name" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="lastName" class="form-label fw-semibold small">Last Name</label>
+                                <input type="text" class="form-control" id="lastName" name="last_name" required>
+                            </div>
+
+                            <div class="col-12">
+                                <label for="gender" class="form-label fw-semibold small">Gender</label>
+                                <select id="gender" name="gender" class="form-select" required>
+                                    <option value="0">Male</option>
+                                    <option value="1">Female</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <label for="dob" class="form-label fw-semibold small">Date of Birth</label>
+                                <input type="date" class="form-control" id="dob" name="dob" required>
+                            </div>
+
+                            <div class="col-12">
+                                <label for="email" class="form-label fw-semibold small">Email Address</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+
+                            <div class="col-12">
+                                <label for="classInput" class="form-label fw-semibold small">Class</label>
+                                <input type="text" class="form-control" id="classInput" name="class" placeholder="e.g. Computer Science 1" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-top px-4 py-3">
+                        <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-gradient-primary px-4" id="btnSaveStudent">Save Student</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order matters: jQuery, toastr, Bootstrap, DataTables core, DataTables Bootstrap 5, your script -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="js/toastr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.bootstrap5.min.js"></script>
+    <script src="js/index.js"></script>
+</body>
+</html>
